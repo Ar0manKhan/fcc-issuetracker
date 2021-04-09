@@ -30,9 +30,14 @@ app.route('/:project/')
 
 //Index page (static HTML)
 app.route('/')
-  .get(function (req, res) {
+  .get(function (_req, res) {
     res.sendFile(process.cwd() + '/views/index.html');
   });
+
+app.route('/api/issues/:project').post((req, res) => {
+  const project = req.params.project;
+  res.send(`Called ${project}`);
+})
 
 //For FCC testing purposes
 fccTestingRoutes(app);
