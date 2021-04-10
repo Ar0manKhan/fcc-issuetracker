@@ -3,15 +3,38 @@
 const express = require('express');
 const expect = require('chai').expect;
 const cors = require('cors');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 const apiRoutes = require('./routes/api.js');
 const fccTestingRoutes = require('./routes/fcctesting.js');
 const runner = require('./test-runner');
 
+// Connecting to mongoose database
+mongoose.connect(process.env.DB, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+
+// Creating Schema for database
+const { Schema } = mongoose;
+const issue_schema = new Schema({
+  issue_title: String,
+  issue_text: String,
+  created_on: Date,
+  updated_on: Date,
+  created_by: String,
+  assigned_to: String,
+  open: Boolean,
+  status_text: String
+});
+
+const Issue = mongoose.model("Issue", issue_schema);
+
 // Created different file to handle creating, updating and deleting issue
 // and imported it here
 const issue_handler = require('./issues.js');
+const issue_method = new issue_handler(Issue);
 
 let app = express();
 
@@ -32,6 +55,7 @@ app.route('/:project/')
 app.route('/')
   .get(function (_req, res) {
     res.sendFile(process.cwd() + '/views/index.html');
+    issue_method.say_hello('Arman');
   });
 
 app.route('/api/issues/:project').post((req, res) => {
