@@ -13,28 +13,22 @@ const runner = require('./test-runner');
 // Connecting to mongoose database
 mongoose.connect(process.env.DB, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  useFindAndModify: false
 })
 
 // Creating Schema for database
 const { Schema } = mongoose;
 const issue_schema = new Schema({
+  assigned_to: String,
+  status_text: String,
+  open: Boolean,
   issue_title: String,
   issue_text: String,
-  created_on: Date,
-  updated_on: Date,
   created_by: String,
-  assigned_to: String,
-  open: Boolean,
-  status_text: String
-});
-
-const Issue = mongoose.model("Issue", issue_schema);
-
-// Created different file to handle creating, updating and deleting issue
-// and imported it here
-const issue_handler = require('./issues.js');
-const issue_method = new issue_handler(Issue);
+  created_on: Date,
+  updated_on: Date
+}, { versionKey: false });
 
 let app = express();
 
@@ -55,13 +49,95 @@ app.route('/:project/')
 app.route('/')
   .get(function (_req, res) {
     res.sendFile(process.cwd() + '/views/index.html');
-    issue_method.say_hello('Arman');
   });
 
+// Function that will extract all data from request and return in object fromat
+const create_issue_obj = (body) => {
+
+  // Extracting all datas from request body
+  const { issue_title, issue_text, created_by, assigned_to, status_text, open } = body;
+
+  let return_object = {
+    issue_title,
+    issue_text,
+    created_by,
+    assigned_to,
+    status_text,
+    open,
+    updated_on: new Date()
+  }
+
+  // Deleting undefined item to make compatible with all forms
+  Object.keys(return_object).forEach(key => {
+    if (!return_object[key]) delete return_object[key]
+  });
+
+  return return_object;
+}
+
 app.route('/api/issues/:project').post((req, res) => {
-  const project = req.params.project;
-  res.send(`Called ${project}`);
-})
+
+  // Creating schema to make it work with every project
+  const Issue = mongoose.model(req.params.project, issue_schema);
+
+  let issue_obj = create_issue_obj(req.body);
+  issue_obj.created_on = new Date();
+  issue_obj.open = true;
+
+  // Creating issue and saving it
+  const new_issue = new Issue(issue_obj);
+
+  new_issue.save((err, data) => {
+    if (err) res.send('Some error');
+    else {
+      res.json(data);
+    };
+  });
+});
+
+app.route('/api/issues/:project').put((req, res) => {
+
+  // Creating schema to make it work with every project
+  const Issue = mongoose.model(req.params.project, issue_schema);
+
+  let _id = req.body._id;
+  let issue_obj = create_issue_obj(req.body);
+
+  Issue.findByIdAndUpdate(_id, issue_obj, { new: true }, (err, data) => {
+    if (err) res.send('Error while updating');
+    else res.json({
+      result: "successfully updated",
+      _id
+    });
+  });
+});
+
+app.route('/api/issues/:project').delete((req, res) => {
+
+  // Creating schema to make it work with every project
+  const Issue = mongoose.model(req.params.project, issue_schema);
+
+  let _id = req.body._id;
+
+  Issue.findByIdAndRemove(_id, (err, data) => {
+    if (err) res.send('Error while deleting');
+    else res.json({
+      result: "successfully deleted",
+      _id
+    });
+  });
+});
+
+app.route('/api/issues/:project').get((req, res) => {
+
+  // Creating schema to make it work with every project
+  const Issue = mongoose.model(req.params.project, issue_schema);
+
+  Issue.find({}, (err, data) => {
+    if (err) res.send('Error while fetching data');
+    else res.json(data);
+  });
+});
 
 //For FCC testing purposes
 fccTestingRoutes(app);
