@@ -23,9 +23,9 @@ const issue_schema = new Schema({
   assigned_to: String,
   status_text: String,
   open: Boolean,
-  issue_title: String,
-  issue_text: String,
-  created_by: String,
+  issue_title: { type: String, required: true },
+  issue_text: { type: String, required: true },
+  created_by: { type: String, required: true },
   created_on: Date,
   updated_on: Date
 }, { versionKey: false });
@@ -133,7 +133,7 @@ app.route('/api/issues/:project').get((req, res) => {
   // Creating schema to make it work with every project
   const Issue = mongoose.model(req.params.project, issue_schema);
 
-  Issue.find({}, (err, data) => {
+  Issue.find(req.query, (err, data) => {
     if (err) res.send('Error while fetching data');
     else res.json(data);
   });
