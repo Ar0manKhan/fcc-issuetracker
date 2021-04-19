@@ -88,7 +88,13 @@ app.route('/api/issues/:project').post((req, res) => {
   const new_issue = new Issue(issue_obj);
 
   new_issue.save((err, data) => {
-    if (err) res.send('Some error');
+    if (err) {
+      // Throwing different error if validation fails
+      if (err.name == "ValidationError")
+        res.json({ error: 'required field(s) missing' });
+      else
+        res.json({ error: 'could not create' });
+    }
     else {
       res.json(data);
     };
@@ -100,16 +106,25 @@ app.route('/api/issues/:project').put((req, res) => {
   // Creating schema to make it work with every project
   const Issue = mongoose.model(req.params.project, issue_schema);
 
+  // Getting _id, updated values
   let _id = req.body._id;
   let issue_obj = create_issue_obj(req.body);
 
-  Issue.findByIdAndUpdate(_id, issue_obj, { new: true }, (err, data) => {
-    if (err) res.send('Error while updating');
-    else res.json({
-      result: "successfully updated",
-      _id
+  // Error handling when _id is missing
+  if (!_id)
+    res.send({ error: 'missing _id' });
+  // Error handling when no changes are made
+  else if (Object.keys(issue_obj).length == 1)
+    res.json({ error: 'no update field(s) sent', _id });
+  // After every error checkup, finally updating
+  else
+    Issue.findByIdAndUpdate(_id, issue_obj, { new: true }, (err, data) => {
+      if (err) res.json({ error: 'could not update', _id });
+      else res.json({
+        result: "successfully updated",
+        _id
+      });
     });
-  });
 });
 
 app.route('/api/issues/:project').delete((req, res) => {
@@ -118,13 +133,12 @@ app.route('/api/issues/:project').delete((req, res) => {
   const Issue = mongoose.model(req.params.project, issue_schema);
 
   let _id = req.body._id;
+  // Handling error when no _id is passed
+  if (!_id) res.json({ error: 'missing _id' });
 
   Issue.findByIdAndRemove(_id, (err, data) => {
-    if (err) res.send('Error while deleting');
-    else res.json({
-      result: "successfully deleted",
-      _id
-    });
+    if (err) res.json({ error: 'could not delete', _id });
+    else res.json({ result: "successfully deleted", _id });
   });
 });
 
