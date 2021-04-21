@@ -135,11 +135,11 @@ app.route('/api/issues/:project').delete((req, res) => {
   let _id = req.body._id;
   // Handling error when no _id is passed
   if (!_id) res.json({ error: 'missing _id' });
-
-  Issue.findByIdAndRemove(_id, (err, data) => {
-    if (err) res.json({ error: 'could not delete', _id });
-    else res.json({ result: "successfully deleted", _id });
-  });
+  else
+    Issue.findByIdAndRemove(_id, (err, data) => {
+      if (err) res.json({ error: 'could not delete', _id });
+      else res.json({ result: "successfully deleted", _id });
+    });
 });
 
 app.route('/api/issues/:project').get((req, res) => {
