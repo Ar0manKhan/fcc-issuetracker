@@ -96,6 +96,9 @@ app.route('/api/issues/:project').post((req, res) => {
         res.json({ error: 'could not create' });
     }
     else {
+      for (let item of ["assigned_to", "status_text"])
+        if (!data[item])
+          delete data[item];
       res.json(data);
     };
   });
@@ -119,7 +122,7 @@ app.route('/api/issues/:project').put((req, res) => {
   // After every error checkup, finally updating
   else
     Issue.findByIdAndUpdate(_id, issue_obj, { new: true }, (err, data) => {
-      if (err) res.json({ error: 'could not update', _id });
+      if (err || !data) res.json({ error: 'could not update', _id });
       else res.json({
         result: "successfully updated",
         _id
@@ -137,7 +140,7 @@ app.route('/api/issues/:project').delete((req, res) => {
   if (!_id) res.json({ error: 'missing _id' });
   else
     Issue.findByIdAndRemove(_id, (err, data) => {
-      if (err) res.json({ error: 'could not delete', _id });
+      if (err || !data) res.json({ error: 'could not delete', _id });
       else res.json({ result: "successfully deleted", _id });
     });
 });
