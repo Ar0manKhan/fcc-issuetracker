@@ -20,8 +20,8 @@ mongoose.connect(process.env.DB, {
 // Creating Schema for database
 const { Schema } = mongoose;
 const issue_schema = new Schema({
-  assigned_to: String,
-  status_text: String,
+  assigned_to: { type: String, default: "" },
+  status_text: { type: String, default: "" },
   open: Boolean,
   issue_title: { type: String, required: true },
   issue_text: { type: String, required: true },
@@ -95,12 +95,7 @@ app.route('/api/issues/:project').post((req, res) => {
       else
         res.json({ error: 'could not create' });
     }
-    else {
-      for (let item of ["assigned_to", "status_text"])
-        if (!data[item])
-          delete data[item];
-      res.json(data);
-    };
+    else res.json(data);
   });
 });
 

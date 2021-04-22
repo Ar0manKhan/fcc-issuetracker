@@ -53,9 +53,9 @@ suite('Functional Tests', () => {
 					assert.equal(res.body.issue_title, 'Test2');
 					assert.equal(res.body.issue_text, 'This is second test - Create issue with only required fileds');
 					assert.equal(res.body.created_by, 'Arman');
+					assert.equal(res.body.assigned_to, '');
+					assert.equal(res.body.status_text, '');
 					assert.isTrue(res.body.open);
-					assert.isUndefined(res.body.assigned_to);
-					assert.isUndefined(res.body.status_text);
 
 					// dynamically setting test_id to this issue for further update and delete test
 					test_id = res.body._id;
